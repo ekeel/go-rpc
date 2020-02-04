@@ -7,4 +7,7 @@ build-plugin:
 clean: FORCE
 	scripts/clean.sh
 
+help:
+	scripts/help.sh
+
 FORCE:
