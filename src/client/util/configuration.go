@@ -8,9 +8,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// RPCConfigFileVar is the key of the environment variable containing the path to the configuration file.
-const RPCConfigFileVar = "RPC_CONFIG_FILE"
-
 // Configuration holds the parsed contents from the configuration file.
 // var Configuration map[string]interface{}
 //
@@ -19,7 +16,7 @@ type Configuration struct {
 }
 
 func envConfig() map[string]interface{} {
-	var dict map[string]interface{}
+	dict := make(map[string]interface{})
 
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
@@ -55,20 +52,28 @@ func (conf *Configuration) update(dict map[string]interface{}) {
 func (conf *Configuration) LoadConfig() error {
 	var err error
 	var fileDict map[string]interface{}
+	var envDict map[string]interface{}
 
-	if len(os.Getenv(RPCConfigFileVar)) > 0 {
-		pair := strings.SplitN(os.Getenv(RPCConfigFileVar), "=", 2)
+	conf.Dictionary = make(map[string]interface{})
 
-		fileDict, err = fileConfig(pair[1])
+	if len(os.Getenv("RPC_CONFIG_FILE")) > 0 {
+		v := os.Getenv("RPC_CONFIG_FILE")
+
+		fileDict, err = fileConfig(v)
 		if err != nil {
 			return err
 		}
-
-		envDict := envConfig()
-
-		conf.update(fileDict)
-		conf.update(envDict)
+	} else {
+		fileDict, err = fileConfig("config.yaml")
+		if err != nil {
+			return err
+		}
 	}
+
+	envDict = envConfig()
+
+	conf.update(fileDict)
+	conf.update(envDict)
 
 	return nil
 }

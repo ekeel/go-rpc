@@ -1,19 +1,22 @@
 package main
 
 import (
-	"client/rpcclient"
+	"client/util"
 	"log"
 )
 
 func main() {
-	testPluginClient := rpcclient.NewRPCClient("localhost", "42323", "test_plugin")
+	conf := util.Configuration{}
+	conf.LoadConfig()
 
-	log.Print(testPluginClient.ToString())
-
-	response, err := testPluginClient.Call("{\"working\": \"true\"}")
+	clientDict, err := util.CreateClients(&conf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	response, err := clientDict["testplugin"].Call("{\"data\": \"payload_data\"}")
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Print(response)
 }

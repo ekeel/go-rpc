@@ -16,3 +16,5 @@
 
 bin/
 pkg/
+github.com/
+gopkg.in/

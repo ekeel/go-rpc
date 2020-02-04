@@ -3,8 +3,8 @@ package util
 import (
 	"client/rpcclient"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/ioutil"
+	"path"
 	"strings"
 
 	"github.com/phayes/freeport"
@@ -12,28 +12,33 @@ import (
 
 // CreateClients returns a slice of references to RPCClient's.
 func CreateClients(conf *Configuration) (map[string]*rpcclient.RPCClient, error) {
-	var clients map[string]*rpcclient.RPCClient
-	var files []string
+	clients := make(map[string]*rpcclient.RPCClient)
 
-	root := fmt.Sprintf("%v", conf.Dictionary["plugin_directory"])
+	pluginDir := fmt.Sprintf("%v", conf.Dictionary["plugin_directory"])
+	root := pluginDir
 
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
-	})
+	filesInfo, err := ioutil.ReadDir(root)
 	if err != nil {
 		return clients, err
 	}
 
-	for _, v := range files {
-		host := "localhost"
-		name := strings.ReplaceAll(v, ".go", "")
-		port, err := freeport.GetFreePort()
-		if err != nil {
-			return clients, err
-		}
+	for _, fi := range filesInfo {
+		if len(fi.Name()) > 0 {
+			host := "localhost"
+			name := (strings.Split(fi.Name(), "."))[0]
+			port, err := freeport.GetFreePort()
+			if err != nil {
+				return clients, err
+			}
 
-		clients[name] = rpcclient.NewRPCClient(host, fmt.Sprintf("%v", port), name)
+			client := rpcclient.NewRPCClient(
+				host,
+				(fmt.Sprintf("%v", port)),
+				path.Join(pluginDir, fi.Name()),
+			)
+
+			clients[name] = client
+		}
 	}
 
 	return clients, nil
